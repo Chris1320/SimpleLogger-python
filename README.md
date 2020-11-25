@@ -3,6 +3,7 @@
 ## Description
 
 A simple logger I made for some projects a year ago.
+Thanks to [CodeFix1027](https://github.com/CodeFix1027) for helping me release `v0.0.1.0`!
 
 ## Usage
 
