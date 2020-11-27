@@ -71,7 +71,7 @@ class LoggingObject:
         :**kwargs logfile: Path of logfile to write data into.
         """
 
-        self.VERSION = [0, 0, 1, 0]
+        self.VERSION = [0, 0, 1, 1]
 
         # Set the name of the logger.
         self.name = kwargs.get('name', __name__)
@@ -206,7 +206,7 @@ class LoggingObject:
             raise self.LevelNotSetError("Logging level is not yet defined! Run `logger.LoggingObject().set_logging_level([LEVEL])` to set the level.")
 
         else:
-            logging.basicConfig(level=self.level)
+            # logging.basicConfig(level=self.level)
             self.print_logs = True
 
     def info(self, message):
