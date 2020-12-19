@@ -66,12 +66,21 @@ class LoggingObject:
         """
         Initialization method of the logging object.
 
-        :**kwargs name: Name of the logging object.
-        :**kwargs session_id: Session ID of the logging object.
-        :**kwargs logfile: Path of logfile to write data into.
+        :**kwargs str name: Name of the logging object.
+        :**kwargs int session_id: Session ID of the logging object.
+        :**kwargs str logfile: Path of logfile to write data into.
+        :**kwargs tuple funcs: A list/tuple of function objects that
+                               accepts the following kwargs:
+            - name
+            - session_id
+            - logfile
+            - message
+            - mtype
+                               The functions in the list are called
+                               after logging the messages.
         """
 
-        self.VERSION = [0, 0, 1, 1]
+        self.VERSION = [0, 0, 1, 2]
 
         # Set the name of the logger.
         self.name = kwargs.get('name', __name__)
@@ -100,10 +109,16 @@ class LoggingObject:
         self.log_datas = []  # All logs inf dict form {log_type:  message}
         self.log_data = ""  # Current/Latest log
 
+        # Set the tuple of functions to call after
+        self.afterlog_funcs = kwargs.get('funcs', ())
+
     def _write(self, message):
         """
-        def _write():
-            Write data into a logfile.
+        Write data into a logfile.
+
+        :param str message: The message to write.
+
+        :returns void:
         """
 
         # I didn't put a try/except block to let
@@ -114,14 +129,18 @@ class LoggingObject:
 
         else:
             with open(self.logfile, 'a') as fopen:
-                fopen.write(message + '\n')
+                fopen.write(message)
+                fopen.write('\n')
 
     def _format(self, message, logtype, caller):
         """
-        def _format():
-            Format the message into a more informative one.
+        Format the message into a more informative one.
 
-            :param message: Log message
+        :param str message: Log message
+        :param str logtype: The log message type.
+        :param str caller: The name of the function that called the logger.
+
+        :returns str: The newer version of the message.
         """
 
         if str(caller) == "<module>":
@@ -146,35 +165,40 @@ class LoggingObject:
 
     def get_all_log_datas(self):
         """
-        def get_all_log_datas():
-            Return the log data in a form of tuple in a list.
+        Return the log data in a form of tuple in a list.
+
+        :returns tuple: The log data in tuple in a list form.
         """
 
         return self.log_datas
 
     def get_log_data(self, log_number):
         """
-        def get_log_data():
-            Get a specific log data.
+        Get a specific log data.
 
-            :param log_number: The index number to get the data of log number.
-            :type int:
+        :param int log_number: The index number to get the data of log number.
 
-            :returns: Return the content of the specified log number.
-            :return type: str
+        :returns str: Return the content of the specified log number.
         """
 
         return self.log_datas[log_number]
 
     def get_latest_log_data(self):
         """
-        def get_latest_log_data():
-            Return the last message recieved by logger.
+        Return the last message recieved by logger.
+
+        :returns str: The last message recieved by the logger.
         """
 
         return self.log_data
 
     def set_logging_level(self, level):
+        """
+        Set logging level.
+
+        :returns void:
+        """
+
         if level.upper() == "NOTSET":
             self.level = "NOTSET"
 
@@ -198,8 +222,9 @@ class LoggingObject:
 
     def enable_logging(self):
         """
-        def enable_logging():
-            Show logging information.
+        Show logging information.
+
+        :returns void:
         """
 
         if self.level is None:
@@ -209,12 +234,36 @@ class LoggingObject:
             # logging.basicConfig(level=self.level)
             self.print_logs = True
 
+    def _call_funcs(self, message, mtype):
+        """
+        Call the functions passed by the user.
+
+        :param str message: The message to log.
+        :param str mtype: The log message type.
+
+        :returns void:
+        """
+
+        for function in self.afterlog_funcs:
+            try:
+                function(
+                    name=self.name,
+                    session_id=self.session_id,
+                    logfile=self.logfile,
+                    message=message,
+                    mtype=mtype
+                )
+
+            except Exception as e:
+                pass
+
     def info(self, message):
         """
-        def info():
-            Log information.
+        Log information.
 
-            :param message: Log message.
+        :param message: Log message.
+
+        :returns void:
         """
 
         message = self._format(message, 'info', sys._getframe(1).f_code.co_name)
@@ -222,13 +271,15 @@ class LoggingObject:
         self.log_data = (message, 'info')
         self.logger.info(message)
         self._write(message)
+        self._call_funcs(message, 'info')
 
     def warning(self, message):
         """
-        def warning():
-            Log warnings.
+        Log warnings.
 
-            :param message: Log message.
+        :param message: Log message.
+
+        :returns void:
         """
 
         message = self._format(message, 'warning', sys._getframe(1).f_code.co_name)
@@ -236,13 +287,15 @@ class LoggingObject:
         self.log_data = (message, 'warning')
         self.logger.info(message)
         self._write(message)
+        self._call_funcs(message, 'warning')
 
     def error(self, message):
         """
-        def error():
-            Log errors.
+        Log errors.
 
-            :param message: Log message.
+        :param message: Log message.
+
+        :returns void:
         """
 
         message = self._format(message, 'error', sys._getframe(1).f_code.co_name)
@@ -250,13 +303,15 @@ class LoggingObject:
         self.log_data = (message, 'error')
         self.logger.info(message)
         self._write(message)
+        self._call_funcs(message, 'error')
 
     def debug(self, message):
         """
-        def debug():
-            Log debugging information.
+        Log debugging information.
 
-            :param message: Log message.
+        :param message: Log message.
+
+        :returns void:
         """
 
         message = self._format(message, 'debug', sys._getframe(1).f_code.co_name)
@@ -264,13 +319,15 @@ class LoggingObject:
         self.log_data = (message, 'debug')
         self.logger.info(message)
         self._write(message)
+        self._call_funcs(message, 'debug')
 
     def critical(self, message):
         """
-        def critical():
-            Log critical errors.
+        Log critical errors.
 
-            :param message: Log message.
+        :param message: Log message.
+
+        :returns void:
         """
 
         message = self._format(message, 'critical', sys._getframe(1).f_code.co_name)
@@ -278,11 +335,11 @@ class LoggingObject:
         self.log_data = (message, 'critical')
         self.logger.info(message)
         self._write(message)
+        self._call_funcs(message, 'critical')
 
     class LevelNotSetError(Exception):
         """
-        class LevelNotSetError():
-            An exception class.
+        An exception class.
         """
 
         pass
