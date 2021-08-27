@@ -3,7 +3,7 @@
 """
 MIT License
 
-Copyright (c) 2020 Chris1320
+Copyright (c) 2020-2021 Chris1320
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -80,15 +80,13 @@ class LoggingObject:
                                after logging the messages.
         """
 
-        self.VERSION = [0, 0, 1, 2]
+        self.VERSION = [0, 0, 1, 3]
 
         # Set the name of the logger.
         self.name = kwargs.get('name', __name__)
 
         # Set the session ID of the logger.
-        rand_id = random.randint(100000, 999999)
-        self.session_id = kwargs.get('session_id', rand_id)
-        del rand_id
+        self.session_id = kwargs.get('session_id', random.randint(100000, 999999))
 
         # Set the path of the logfile to write data into.
         self.logfile = kwargs.get('logfile', None)
@@ -150,15 +148,15 @@ class LoggingObject:
             caller = str(caller) + "()"
 
         result = ":{}: [{}] ({}) | {} | {}".format(
-                logtype.upper(),
-                str(self.session_id),
-                time.strftime("%H:%M:%S %b %d %Y"),
-                caller,
-                message
-                )
+            logtype.upper(),
+            str(self.session_id),
+            time.strftime("%H:%M:%S %b %d %Y"),
+            caller,
+            message
+        )
 
         # I put this here because I'm lazy doing another method.
-        if self.print_logs == True:
+        if self.print_logs:
             print(result)
 
         return result
