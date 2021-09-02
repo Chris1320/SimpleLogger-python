@@ -78,18 +78,22 @@ class LoggingObject:
             - mtype
                                The functions in the list are called
                                after logging the messages.
+        :**kwargs str encoding: The encoding to be used in writing to logfile.
         """
 
-        self.VERSION = [0, 0, 1, 3]
+        self.VERSION = (0, 0, 1, 5)
 
         # Set the name of the logger.
-        self.name = kwargs.get('name', __name__)
+        self.name = kwargs.get("name", __name__)
 
         # Set the session ID of the logger.
-        self.session_id = kwargs.get('session_id', random.randint(100000, 999999))
+        self.session_id = kwargs.get("session_id", random.randint(100000, 999999))
 
         # Set the path of the logfile to write data into.
-        self.logfile = kwargs.get('logfile', None)
+        self.logfile = kwargs.get("logfile", None)
+
+        # Set the encoding
+        self.encoding = kwargs.get("encoding", "utf-8")
 
         # Initialize the main logging object.
         self.logger = logging.getLogger(self.name)
@@ -108,7 +112,7 @@ class LoggingObject:
         self.log_data = ""  # Current/Latest log
 
         # Set the tuple of functions to call after
-        self.afterlog_funcs = kwargs.get('funcs', ())
+        self.afterlog_funcs = kwargs.get("funcs", ())
 
     def _write(self, message):
         """
@@ -126,9 +130,15 @@ class LoggingObject:
             return None
 
         else:
-            with open(self.logfile, 'a') as fopen:
-                fopen.write(message)
-                fopen.write('\n')
+            try:
+                with open(self.logfile, 'a', encoding=self.encoding) as fopen:
+                    fopen.write(message)
+                    fopen.write('\n')
+
+            except UnicodeEncodeError:
+                with open(self.logfile, 'ab', encoding=self.encoding) as fopen:
+                    fopen.write(message)
+                    fopen.write(b'\n')
 
     def _format(self, message, logtype, caller):
         """
@@ -243,17 +253,13 @@ class LoggingObject:
         """
 
         for function in self.afterlog_funcs:
-            try:
-                function(
-                    name=self.name,
-                    session_id=self.session_id,
-                    logfile=self.logfile,
-                    message=message,
-                    mtype=mtype
-                )
-
-            except Exception as e:
-                pass
+            function(
+                name=self.name,
+                session_id=self.session_id,
+                logfile=self.logfile,
+                message=message,
+                mtype=mtype
+            )
 
     def info(self, message):
         """
