@@ -32,3 +32,4 @@ if __name__ == "__main__":
     print("Name:   ", info.name)
     print("Version:", info.version)
     sys.exit(0)
+

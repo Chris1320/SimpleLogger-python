@@ -21,3 +21,30 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
+import os
+import logging
+
+
+class Logger():
+    """
+    The logger class.
+    """
+
+    def __init__(self, name: str, logfile: str, **kwargs):
+        """
+        The initialization method of the Logger() class.
+
+        name: str, The name of the logging object.
+        logfile: str, the path where to write the logs.
+        kwargs: dict, The keyword arguments.
+            mode: bool, set to the following modes: (Default: `append`)
+                append: Append logs to existing file.
+                overwrite: Overwrite existing file.
+            memory: If True, store logs in memory and manually call `dump()` to dump to file. (Default: False)
+        """
+
+        self.name = str(name)
+        self.mode = kwargs.get(mode, "append") if kwargs.get(mode, "append") in ("append", "overwrite") else raise ValueError("mode must be `append` or `overwrite`.")
+        self.memory = kwargs.get(memory, False)
+
