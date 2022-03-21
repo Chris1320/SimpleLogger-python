@@ -23,6 +23,7 @@ SOFTWARE.
 """
 
 import os
+import json
 import logging
 
 
@@ -35,16 +36,52 @@ class Logger():
         """
         The initialization method of the Logger() class.
 
-        name: str, The name of the logging object.
-        logfile: str, the path where to write the logs.
-        kwargs: dict, The keyword arguments.
-            mode: bool, set to the following modes: (Default: `append`)
-                append: Append logs to existing file.
-                overwrite: Overwrite existing file.
-            memory: If True, store logs in memory and manually call `dump()` to dump to file. (Default: False)
+        name   : str,     The name of the logging object.
+        logfile: str,     the path where to write the logs.
+        kwargs : dict,    The keyword arguments.
+        mode   : bool,    set to the following modes: (Default: `append`)
+            append   :    Append logs to existing file.
+            overwrite:    Overwrite existing file.
+        memory : bool,    If True, store logs in memory and manually call `dump()` to dump to file. (Default: False)
         """
 
         self.name = str(name)
-        self.mode = kwargs.get(mode, "append") if kwargs.get(mode, "append") in ("append", "overwrite") else raise ValueError("mode must be `append` or `overwrite`.")
-        self.memory = kwargs.get(memory, False)
+        self.logfile = str(logfile)
 
+        # Get optional parameters from kwargs.
+        if kwargs.get("mode", "append") in ("append", "overwrite"):
+            self.mode = kwargs.get("mode", "append")
+
+        else:
+            raise ValueError("mode must be `append` or `overwrite`.")
+        self.memory = kwargs.get("memory", False)
+
+        # Format:
+        # {
+        #     <session 1>: [<logs>],
+        #     <session 2>: [<logs>]
+        # }
+
+        if os.path.exists(self.logfile):
+            if self.mode == "append":
+                self.logs = self.__load_logfile()
+
+    def __load_logfile(self):
+        """
+        Load the logfile located in <self.logfile>.
+
+        :returns str: Logs in JSON format.
+        """
+
+        with open(self.logfile, "r") as f:
+            return json.load(f)
+
+    def __dump_logfile(self):
+        """
+        Dump the logfile located in <self.logfile>.
+
+        :returns void:
+        """
+
+        with open(self.logfile, "w") as f:
+            json.dump(self.logs, f)
