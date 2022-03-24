@@ -23,5 +23,5 @@ SOFTWARE.
 """
 
 name = "SimpleLogger"
-version = (0, 1, 4)
+version = (0, 1, 5)
 title = f"{name} v{'.'.join(map(str, version))}"

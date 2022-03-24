@@ -168,7 +168,7 @@ class Logger():
 
             elif self.__mode == "overwrite":
                 with open(self.logfile, 'w') as f:
-                    f.write('')
+                    pass  # Remove contents from logfile
 
             else:
                 raise FileExistsError("The logfile already exists.")
@@ -418,7 +418,7 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}[{1}{3}CRITICAL{0}] {2}".format(cm_fore.RESET, cm_fore.BLACK, msg, cm_back.LIGHTRED_EX))
+                print("{0}{3}[{1}CRITICAL{0}] {2}{4}".format(cm_fore.RESET, cm_fore.BLACK, msg, cm_back.LIGHTRED_EX, cm_back.RESET))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
