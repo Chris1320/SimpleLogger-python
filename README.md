@@ -3,7 +3,6 @@
 ## Description
 
 A simple logger I made for some projects a year ago.
-Thanks to [CodeFix1027](https://github.com/CodeFix1027) for helping me release `v0.0.1.0`!
 
 ## Usage
 
@@ -28,7 +27,7 @@ log_obj.critical("Sample critical message.")
 
 MIT License
 
-Copyright (c) 2020 Chris1320
+Copyright (c) 2020-2022 Chris1320
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
