@@ -113,7 +113,7 @@ class Logger():
 
         # * Get memory.
         if type(kwargs.get("memory", False)) is bool:
-            if self.__mode == "append" or self.autoforget:
+            if (self.__mode == "append" or self.autoforget) and kwargs.get("memory", False):
                 raise ValueError("`memory` cannot be set to True when `mode` is `append` or `autoforget` is True.")
 
             else:
@@ -235,6 +235,7 @@ class Logger():
         if self.max_logfile_sz is not None:
             if os.path.getsize(self.logfile) > self.max_logfile_sz * 1024 * 1024:
                 # ? Is this too much to process?
+                # FIXME: This algorithm degrades performance SIGNIFICANTLY.
                 with open(self.logfile, 'r') as f:
                     logs = f.readlines()  # Get ALL logs from the file.
 
