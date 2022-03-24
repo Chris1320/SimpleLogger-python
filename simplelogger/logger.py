@@ -330,7 +330,11 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}[{1}DEBUG{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTBLACK_EX, msg))
+                if COLORAMA_SUPPORT:
+                    print("{0}[{1}DEBUG{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTBLACK_EX, msg))
+
+                else:
+                    print("[DEBUG] {0}".format(msg))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
@@ -352,7 +356,11 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}[{1}i{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTGREEN_EX, msg))
+                if COLORAMA_SUPPORT:
+                    print("{0}[{1}i{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTGREEN_EX, msg))
+
+                else:
+                    print("[i] {0}".format(msg))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
@@ -374,7 +382,11 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}[{1}!{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTYELLOW_EX, msg))
+                if COLORAMA_SUPPORT:
+                    print("{0}[{1}!{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTYELLOW_EX, msg))
+
+                else:
+                    print("[!] {0}".format(msg))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
@@ -396,7 +408,11 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}[{1}E{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTRED_EX, msg))
+                if COLORAMA_SUPPORT:
+                    print("{0}[{1}E{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTRED_EX, msg))
+
+                else:
+                    print("[E] {0}".format(msg))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
@@ -418,7 +434,11 @@ class Logger():
                 self.__session_logs.append(log)
 
             if self.show_output:
-                print("{0}{3}[{1}CRITICAL{0}] {2}{4}".format(cm_fore.RESET, cm_fore.BLACK, msg, cm_back.LIGHTRED_EX, cm_back.RESET))
+                if COLORAMA_SUPPORT:
+                    print("{0}{3}[{1}CRITICAL{0}] {2}{4}".format(cm_fore.RESET, cm_fore.BLACK, msg, cm_back.LIGHTRED_EX, cm_back.RESET))
+
+                else:
+                    print("[CRITICAL] {0}".format(msg))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
