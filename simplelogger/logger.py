@@ -25,6 +25,8 @@ SOFTWARE.
 import os
 import time
 
+from hashlib import blake2b
+
 # from . import info as pinfo  # Package info; to avoid confusion with the info method in Logger() class.
 
 # Try to import an optional package
@@ -167,7 +169,7 @@ class Logger():
         :returns str: The new session ID.
         """
 
-        return str(time.strftime(r"%Y%m%d%H%M%S"))
+        return blake2b(time.strftime(r"%Y%m%d%H%M%S").encode()).hexdigest().upper()[:8]
 
     def __timestamper(self) -> str:
         """
