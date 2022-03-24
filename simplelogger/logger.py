@@ -23,8 +23,20 @@ SOFTWARE.
 """
 
 import os
-import json
-import logging
+import time
+
+# from . import info as pinfo  # Package info; to avoid confusion with the info method in Logger() class.
+
+# Try to import an optional package
+try:
+    from colorama import init as cm_init
+    from colorama import Fore as cm_fore
+    from colorama import Back as cm_back
+    # from colorama import Style as cm_style
+    COLORAMA_SUPPORT = True
+
+except ImportError:
+    COLORAMA_SUPPORT = False
 
 
 class Logger():
@@ -36,25 +48,72 @@ class Logger():
         """
         The initialization method of the Logger() class.
 
-        name   : str,     The name of the logging object.
-        logfile: str,     the path where to write the logs.
-        kwargs : dict,    The keyword arguments.
-        mode   : bool,    set to the following modes: (Default: `append`)
-            append   :    Append logs to existing file.
-            overwrite:    Overwrite existing file.
-        memory : bool,    If True, store logs in memory and manually call `dump()` to dump to file. (Default: False)
+        name         : str,     The name of the logging object.
+        logfile      : str,     the path where to write the logs.
+        kwargs       : dict,    The keyword arguments.
+
+        Available kwargs:
+        autoforget     : bool,    If True, the logger will delete logs on memory when it reaches a specified size. (Default: False)
+        logsize        : int,    The number of logs stored in memory before deleting it from memory. (Default: 100)
+        mode           : bool,    set to the following modes: (Default: `append`)
+            append     :          Append logs to existing file.
+            overwrite  :          Overwrite existing file. (Unavailable when `autoforget` is True.)
+
+        loglevel       : int,     Log level to save.
+                     1 = Critical
+                     2 = Error
+                     3 = Warning
+                     4 = Info
+                     5 = Debug
+        memory         : bool,    If True, store logs in memory and manually call `dumpLogs()` to dump to file. (Default: False; False when `autoforget` is True)
+        session_id     : str,     The session id of the logger.
+        timestamp      : str,     A strftime-compatible format to use. If None, `time.asctime()` is used instead.
+        show_output    : bool,    If True, print the logs to the console. (Default: False)
+        log_format     : str,     The format of the log.
+           {session_id}: The Session ID of the logger object.
+           {type}     : The log level/type.
+           {timestamp} : The timestamp of the log.
+           {message}   : The message of the log.
         """
 
         self.name = str(name)
         self.logfile = str(logfile)
 
         # Get optional parameters from kwargs.
-        if kwargs.get("mode", "append") in ("append", "overwrite"):
-            self.mode = kwargs.get("mode", "append")
+        # * Get autoforget.
+        if type(kwargs.get("autoforget", False)) is bool:
+            self.autoforget = kwargs.get("autoforget", False)
+
+        else:
+            raise ValueError("autoforget must be a boolean.")
+
+        # * Get the maximum log size. (To be used when autoforget is True.)
+        self.logsize = int(kwargs.get("logsize", 100))
+
+        # * Get mode.
+        if kwargs.get("mode", "append") == "append":
+            self.__mode = "append"
+
+        elif kwargs.get("mode", "append") == "overwrite":
+            if self.autoforget:
+                raise ValueError("`autoforget` is True, mode cannot be set to `overwrite`.")
+
+            self.__mode = "overwrite"
 
         else:
             raise ValueError("mode must be `append` or `overwrite`.")
-        self.memory = kwargs.get("memory", False)
+
+        # * Get log level.
+        self.loglevel = int(kwargs.get("loglevel", 3))
+        if self.loglevel < 1 or self.loglevel > 5:
+            raise ValueError("loglevel must be an integer between 1 and 5.")
+
+        # * Get memory.
+        if type(kwargs.get("memory", False)) is bool:
+            self.memory = kwargs.get("memory", False)
+
+        else:
+            raise ValueError("memory must be a boolean.")
 
         # Format:
         # {
@@ -62,26 +121,267 @@ class Logger():
         #     <session 2>: [<logs>]
         # }
 
+        # * Generate or get new session ID.
+        self.__session_id = str(kwargs.get("session_id", self.__generateSessionID()))
+
+        # * Get timestamp format.
+        if kwargs.get("timestamp", None) is None:
+            self.timestamp_format = None
+
+        else:
+            self.timestamp_format = str(kwargs.get("timestamp"))
+
+        # * Set show_output.
+        if type(kwargs.get("show_output", False)) is bool:
+            self.show_output = kwargs.get("show_output", False)
+
+        else:
+            raise ValueError("show_output must be a boolean.")
+
+        if self.show_output:
+            if COLORAMA_SUPPORT:
+                cm_init()  # Initialize colorama if show_output is True.
+
+        # * Set log_format.
+        self.log_format = str(kwargs.get("log_format", "{session_id}:{timestamp}:{type}: {message}"))
+
+        self.__session_logs = []  # Create the list that will contain the new logs.
+
+        # * Check if logfile already exists.
         if os.path.exists(self.logfile):
-            if self.mode == "append":
-                self.logs = self.__load_logfile()
+            if self.__mode == "append":
+                pass
 
-    def __load_logfile(self):
+            elif self.__mode == "overwrite":
+                with open(self.logfile, 'w') as f:
+                    f.write()
+
+            else:
+                raise FileExistsError("The logfile already exists.")
+
+    @staticmethod
+    def __generateSessionID() -> str:
         """
-        Load the logfile located in <self.logfile>.
+        Generate a new session ID.
 
-        :returns str: Logs in JSON format.
+        :returns str: The new session ID.
         """
 
-        with open(self.logfile, "r") as f:
-            return json.load(f)
+        return str(time.strftime(r"%Y%m%d%H%M%S"))
 
-    def __dump_logfile(self):
+    def __timestamper(self) -> str:
         """
-        Dump the logfile located in <self.logfile>.
+        Return time using <self.timestamp_format>.
+
+        :returns str: The formatted time.
+        """
+
+        return time.asctime() if self.timestamp_format is None else str(time.strftime(self.timestamp_format))
+
+    def __write_to_file(self, line: str) -> None:
+        """
+        Write <line> to a line.
+
+        line: str, the log to write.
 
         :returns void:
         """
 
-        with open(self.logfile, "w") as f:
-            json.dump(self.logs, f)
+        with open(self.logfile, "a") as file:
+            file.write(self._format_log(line))
+
+    def _format_log(self, log: dict) -> str:
+        """
+        Format the log into a string.
+
+        log: dict, the log in dictionary form.
+
+        :returns str: The string form of the log.
+        """
+
+        return "{0}\n".format(self.log_format.format(
+            session_id=self.__session_id,
+            type=log["type"].upper(),
+            timestamp=log["timestamp"],
+            message=log["msg"]
+        ))
+
+    def dumpLogs(self) -> None:
+        """
+        Manually dump <self.__session_logs> to <self.logfile>.
+        Raises a PermissionError when self.memory is False.
+
+        :returns void:
+        """
+
+        if not self.memory:
+            raise PermissionError("self.memory is not True.")
+
+        if self.__mode == "append":
+            mode = 'a'
+
+        elif self.__mode == "overwrite":
+            mode = 'w'
+
+        else:
+            raise ValueError("Invalid mode.")
+
+        with open(self.logfile, mode) as f:
+            for log in self.__session_logs:
+                f.write(self._format_log(log))
+
+    def sizeWatcher(self) -> None:
+        """
+        Monitor the size of the logs and save them to file when it reaches the number of specified log size.
+
+        :returns void:
+        """
+
+        if self.autoforget:
+            if len(self.__session_logs) >= self.logsize:
+                self.dumpLogs()
+                self.__session_logs = []  # Clear the session logs.
+
+    def getLoggerInfo(self) -> dict:
+        """
+        Return a dictionary containing information about the logger.
+
+        :returns dict:
+        """
+
+        return {
+            "name": self.name,
+            "logfile": self.logfile,
+
+            "autoforget": self.autoforget,
+            "logsize": self.logsize,
+            "mode": self.__mode,
+            "loglevel": self.loglevel,
+            "memory": self.memory,
+            "session_id": self.__session_id,
+            "timestamp": self.timestamp_format,
+            "show_output": self.show_output,
+            "log_format": self.log_format,
+            "stats": {
+                "log_size": len(self.__session_logs),
+            }
+        }
+
+    def getAllLogs(self):
+        """
+        Return self.__session_logs.
+
+        :returns list:
+        """
+
+        return self.__session_logs
+
+    def debug(self, msg: str):
+        """
+        Log a debug message.
+
+        msg: str, The message to log.
+
+        :returns void:
+        """
+
+        if self.loglevel >= 5:  # Check if log will be stored.
+            log = {"timestamp": self.__timestamper(), "type": "debug", "msg": msg}
+            if not self.autoforget:
+                self.__session_logs.append(log)
+
+            if self.show_output:
+                print("{0}[{1}DEBUG{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTBLACK_EX, msg))
+
+            if not self.memory:  # If self.memory if False, save to logfile.
+                self.__write_to_file(log)
+
+        self.sizeWatcher()
+
+    def info(self, msg: str):
+        """
+        Log an info message.
+
+        msg: str, The message to log.
+
+        :returns void:
+        """
+
+        if self.loglevel >= 4:  # Check if log will be stored.
+            log = {"timestamp": self.__timestamper(), "type": "info", "msg": msg}
+            if not self.autoforget:
+                self.__session_logs.append(log)
+
+            if self.show_output:
+                print("{0}[{1}i{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTGREEN_EX, msg))
+
+            if not self.memory:  # If self.memory if False, save to logfile.
+                self.__write_to_file(log)
+
+        self.sizeWatcher()
+
+    def warning(self, msg: str):
+        """
+        Log a warning message.
+
+        msg: str, The message to log.
+
+        :returns void:
+        """
+
+        if self.loglevel >= 3:  # Check if log will be stored.
+            log = {"timestamp": self.__timestamper(), "type": "warning", "msg": msg}
+            if not self.autoforget:
+                self.__session_logs.append(log)
+
+            if self.show_output:
+                print("{0}[{1}!{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTYELLOW_EX, msg))
+
+            if not self.memory:  # If self.memory if False, save to logfile.
+                self.__write_to_file(log)
+
+        self.sizeWatcher()
+
+    def error(self, msg: str):
+        """
+        Log an error message.
+
+        msg: str, The message to log.
+
+        :returns void:
+        """
+
+        if self.loglevel >= 2:  # Check if log will be stored.
+            log = {"timestamp": self.__timestamper(), "type": "error", "msg": msg}
+            if not self.autoforget:
+                self.__session_logs.append(log)
+
+            if self.show_output:
+                print("{0}[{1}E{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTRED_EX, msg))
+
+            if not self.memory:  # If self.memory if False, save to logfile.
+                self.__write_to_file(log)
+
+        self.sizeWatcher()
+
+    def critical(self, msg: str):
+        """
+        Log a critical error message.
+
+        msg: str, The message to log.
+
+        :returns void:
+        """
+
+        if self.loglevel >= 1:  # Check if log will be stored.
+            log = {"timestamp": self.__timestamper(), "type": "critical", "msg": msg}
+            if not self.autoforget:
+                self.__session_logs.append(log)
+
+            if self.show_output:
+                print("{0}[{1}{3}CRITICAL{0}] {2}".format(cm_fore.RESET, cm_fore.BLACK, msg, cm_back.LIGHTRED_EX))
+
+            if not self.memory:  # If self.memory if False, save to logfile.
+                self.__write_to_file(log)
+
+        self.sizeWatcher()
