@@ -234,7 +234,14 @@ class Logger():
 
         if self.max_logfile_sz is not None:
             if os.path.getsize(self.logfile) > self.max_logfile_sz * 1024 * 1024:
-                pass  # TODO: Implement this.
+                # ? Is this too much to process?
+                with open(self.logfile, 'r') as f:
+                    logs = f.readlines()  # Get ALL logs from the file.
+
+                with open(self.logfile, 'w') as f:
+                    for i in range(0, len(logs) - 1):
+                        if i != 0:  # Don't write the oldest log. (Which is located at the top of the file)
+                            f.write(logs[i])
 
     def dumpLogs(self) -> None:
         """
