@@ -67,7 +67,7 @@ class Logger():
                      3 = Warning
                      4 = Info
                      5 = Debug
-        memory         : bool,    If True, store logs in memory and manually call `dumpLogs()` to dump to file. (Default: False; False when `autoforget` is True)
+        memory         : bool,    If True, store logs in memory and manually call `dumpLogs()` to dump to file. (Default: False; False when `autoforget` is True or when mode is `append`.)
         session_id     : str,     The session id of the logger.
         timestamp      : str,     A strftime-compatible format to use. If None, `time.asctime()` is used instead.
         show_output    : bool,    If True, print the logs to the console. (Default: False)
@@ -76,6 +76,7 @@ class Logger():
            {type}     : The log level/type.
            {timestamp} : The timestamp of the log.
            {message}   : The message of the log.
+        max_logfile_sz : float,   (WIP) The maximum size of the logfile in MB. Set to `None` to disable limit. (Default: 10)
         """
 
         self.name = str(name)
@@ -112,7 +113,11 @@ class Logger():
 
         # * Get memory.
         if type(kwargs.get("memory", False)) is bool:
-            self.memory = kwargs.get("memory", False)
+            if self.__mode == "append" or self.autoforget:
+                raise ValueError("`memory` cannot be set to True when `mode` is `append` or `autoforget` is True.")
+
+            else:
+                self.memory = kwargs.get("memory", False)
 
         else:
             raise ValueError("memory must be a boolean.")
@@ -147,6 +152,13 @@ class Logger():
         # * Set log_format.
         self.log_format = str(kwargs.get("log_format", "{session_id}:{timestamp}:{type}: {message}"))
 
+        # * Set maximum logfile size. (in megabytes)
+        if kwargs.get("max_logfile_sz", 10.0) is None:
+            self.max_logfile_sz = None
+
+        else:
+            self.max_logfile_sz = float(kwargs.get("max_logfile_sz", 10.0))
+
         self.__session_logs = []  # Create the list that will contain the new logs.
 
         # * Check if logfile already exists.
@@ -156,7 +168,7 @@ class Logger():
 
             elif self.__mode == "overwrite":
                 with open(self.logfile, 'w') as f:
-                    f.write()
+                    f.write('')
 
             else:
                 raise FileExistsError("The logfile already exists.")
@@ -208,6 +220,22 @@ class Logger():
             message=log["msg"]
         ))
 
+    def __sizeWatcher(self) -> None:
+        """
+        Monitor the size of the logs and save them to file when it reaches the number of specified log size.
+
+        :returns void:
+        """
+
+        if self.autoforget:
+            if len(self.__session_logs) >= self.logsize:
+                self.dumpLogs()
+                self.__session_logs = []  # Clear the session logs.
+
+        if self.max_logfile_sz is not None:
+            if os.path.getsize(self.logfile) > self.max_logfile_sz * 1024 * 1024:
+                pass  # TODO: Implement this.
+
     def dumpLogs(self) -> None:
         """
         Manually dump <self.__session_logs> to <self.logfile>.
@@ -217,7 +245,7 @@ class Logger():
         """
 
         if not self.memory:
-            raise PermissionError("self.memory is not True.")
+            raise PermissionError("self.memory is not True, logs are automatically written to logfile.")
 
         if self.__mode == "append":
             mode = 'a'
@@ -232,17 +260,18 @@ class Logger():
             for log in self.__session_logs:
                 f.write(self._format_log(log))
 
-    def sizeWatcher(self) -> None:
+    def flushLogs(self) -> None:
         """
-        Monitor the size of the logs and save them to file when it reaches the number of specified log size.
+        Manually clear session logs from memory.
+        Raises a PermissionError when self.memory is False.
 
         :returns void:
         """
 
-        if self.autoforget:
-            if len(self.__session_logs) >= self.logsize:
-                self.dumpLogs()
-                self.__session_logs = []  # Clear the session logs.
+        if not self.memory:
+            raise PermissionError("self.memory is not True. `autoforget` can be used instead.")
+
+        self.__session_logs = []
 
     def getLoggerInfo(self) -> dict:
         """
@@ -298,7 +327,7 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
-        self.sizeWatcher()
+        self.__sizeWatcher()
 
     def info(self, msg: str):
         """
@@ -320,7 +349,7 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
-        self.sizeWatcher()
+        self.__sizeWatcher()
 
     def warning(self, msg: str):
         """
@@ -342,7 +371,7 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
-        self.sizeWatcher()
+        self.__sizeWatcher()
 
     def error(self, msg: str):
         """
@@ -364,7 +393,7 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
-        self.sizeWatcher()
+        self.__sizeWatcher()
 
     def critical(self, msg: str):
         """
@@ -386,4 +415,4 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
-        self.sizeWatcher()
+        self.__sizeWatcher()
