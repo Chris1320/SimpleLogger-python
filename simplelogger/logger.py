@@ -23,6 +23,7 @@ SOFTWARE.
 """
 
 import os
+import sys
 import time
 
 from hashlib import blake2b
@@ -150,7 +151,7 @@ class Logger():
                 cm_init()  # Initialize colorama if show_output is True.
 
         # * Set log_format.
-        self.log_format = str(kwargs.get("log_format", "{session_id}|{timestamp}|{type}|{message}"))
+        self.log_format = str(kwargs.get("log_format", ":{type}: [{session_id}] ({timestamp}) {caller} | {message}"))
 
         # * Set maximum logfile size. (in megabytes)
         if kwargs.get("max_logfile_sz", 10.0) is None:
@@ -181,7 +182,7 @@ class Logger():
         :returns str: The new session ID.
         """
 
-        return blake2b(time.strftime(r"%Y%m%d%H%M%S").encode()).hexdigest().upper()[:8]
+        return blake2b(str(time.time()).encode()).hexdigest().upper()[:8]
 
     def __timestamper(self) -> str:
         """
@@ -217,7 +218,8 @@ class Logger():
             session_id=self.__session_id,
             type=log["type"].upper(),
             timestamp=log["timestamp"],
-            message=log["msg"]
+            message=log["msg"],
+            caller=f"{log['caller']}()"
         ))
 
     def __sizeWatcher(self) -> None:
@@ -325,16 +327,21 @@ class Logger():
         """
 
         if self.loglevel >= 5:  # Check if log will be stored.
-            log = {"timestamp": self.__timestamper(), "type": "debug", "msg": msg}
+            log = {
+                "timestamp": self.__timestamper(),
+                "type": "debug",
+                "msg": msg,
+                "caller": sys._getframe(1).f_code.co_name
+            }
             if not self.autoforget:
                 self.__session_logs.append(log)
 
             if self.show_output:
                 if COLORAMA_SUPPORT:
-                    print("{0}[{1}DEBUG{0}] {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTBLACK_EX, msg))
+                    print("{0}[{1}DEBUG{0}] {3}(): {1}{2}{0}".format(cm_fore.RESET, cm_fore.LIGHTBLACK_EX, msg, log["caller"]))
 
                 else:
-                    print("[DEBUG] {0}".format(msg))
+                    print("[DEBUG] {1}(): {0}".format(msg, log["caller"]))
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
@@ -351,7 +358,12 @@ class Logger():
         """
 
         if self.loglevel >= 4:  # Check if log will be stored.
-            log = {"timestamp": self.__timestamper(), "type": "info", "msg": msg}
+            log = {
+                "timestamp": self.__timestamper(),
+                "type": "info",
+                "msg": msg,
+                "caller": sys._getframe(1).f_code.co_name
+            }
             self.__session_logs.append(log)
 
             if self.show_output:
@@ -376,7 +388,12 @@ class Logger():
         """
 
         if self.loglevel >= 3:  # Check if log will be stored.
-            log = {"timestamp": self.__timestamper(), "type": "warning", "msg": msg}
+            log = {
+                "timestamp": self.__timestamper(),
+                "type": "warning",
+                "msg": msg,
+                "caller": sys._getframe(1).f_code.co_name
+            }
             if not self.autoforget:
                 self.__session_logs.append(log)
 
@@ -402,7 +419,12 @@ class Logger():
         """
 
         if self.loglevel >= 2:  # Check if log will be stored.
-            log = {"timestamp": self.__timestamper(), "type": "error", "msg": msg}
+            log = {
+                "timestamp": self.__timestamper(),
+                "type": "error",
+                "msg": msg,
+                "caller": sys._getframe(1).f_code.co_name
+            }
             if not self.autoforget:
                 self.__session_logs.append(log)
 
@@ -428,7 +450,12 @@ class Logger():
         """
 
         if self.loglevel >= 1:  # Check if log will be stored.
-            log = {"timestamp": self.__timestamper(), "type": "critical", "msg": msg}
+            log = {
+                "timestamp": self.__timestamper(),
+                "type": "critical",
+                "msg": msg,
+                "caller": sys._getframe(1).f_code.co_name
+            }
             if not self.autoforget:
                 self.__session_logs.append(log)
 

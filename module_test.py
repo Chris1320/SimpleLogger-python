@@ -27,6 +27,9 @@ import os
 if os.path.exists("logfile.log"):
     os.remove("logfile.log")
 
+if os.path.exists("logfile2.log"):
+    os.remove("logfile2.log")
+
 
 from simplelogger.logger import Logger
 
