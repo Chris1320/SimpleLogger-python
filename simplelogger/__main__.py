@@ -30,5 +30,5 @@ if __name__ == "__main__":
     print(info.title)
     print()
     print("Name:   ", info.name)
-    print("Version:", info.version)
+    print("Version:", '.'.join(map(str, info.version)))
     sys.exit(0)
