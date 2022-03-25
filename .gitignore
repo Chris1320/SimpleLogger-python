@@ -1,4 +1,6 @@
 sl-env/
+logfile.log
+logfile2.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

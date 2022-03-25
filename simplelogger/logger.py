@@ -150,7 +150,7 @@ class Logger():
                 cm_init()  # Initialize colorama if show_output is True.
 
         # * Set log_format.
-        self.log_format = str(kwargs.get("log_format", "{session_id}:{timestamp}:{type}: {message}"))
+        self.log_format = str(kwargs.get("log_format", "{session_id}|{timestamp}|{type}|{message}"))
 
         # * Set maximum logfile size. (in megabytes)
         if kwargs.get("max_logfile_sz", 10.0) is None:
@@ -228,21 +228,21 @@ class Logger():
         """
 
         if self.autoforget:
-            if len(self.__session_logs) >= self.logsize:
-                self.dumpLogs()
-                self.__session_logs = []  # Clear the session logs.
+            if len(self.__session_logs) > self.logsize:
+                self.__session_logs.pop(0)  # Clear the oldest session log.
 
         if self.max_logfile_sz is not None:
-            if os.path.getsize(self.logfile) > self.max_logfile_sz * 1024 * 1024:
-                # ? Is this too much to process?
-                # FIXME: This algorithm degrades performance SIGNIFICANTLY.
-                with open(self.logfile, 'r') as f:
-                    logs = f.readlines()  # Get ALL logs from the file.
+            if os.path.exists(self.logfile):
+                if os.path.getsize(self.logfile) > self.max_logfile_sz * 1024 * 1024:
+                    # ? Is this too much to process?
+                    # FIXME: This algorithm degrades performance SIGNIFICANTLY.
+                    with open(self.logfile, 'r') as f:
+                        logs = f.readlines()  # Get ALL logs from the file.
 
-                with open(self.logfile, 'w') as f:
-                    for i in range(0, len(logs) - 1):
-                        if i != 0:  # Don't write the oldest log. (Which is located at the top of the file)
-                            f.write(logs[i])
+                    with open(self.logfile, 'w') as f:
+                        for i in range(0, len(logs) - 1):
+                            if i != 0:  # Don't write the oldest log. (Which is located at the top of the file)
+                                f.write(logs[i])
 
     def dumpLogs(self) -> None:
         """
@@ -352,8 +352,7 @@ class Logger():
 
         if self.loglevel >= 4:  # Check if log will be stored.
             log = {"timestamp": self.__timestamper(), "type": "info", "msg": msg}
-            if not self.autoforget:
-                self.__session_logs.append(log)
+            self.__session_logs.append(log)
 
             if self.show_output:
                 if COLORAMA_SUPPORT:
