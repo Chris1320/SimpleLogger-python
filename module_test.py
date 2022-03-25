@@ -98,3 +98,22 @@ class TestClass():
 
         assert len(logger.getAllLogs()) == 50
         assert logger.getLoggerInfo()["stats"]["log_size"] == 50
+
+    def test_logging_information(self):
+        logger = Logger("Logging Information Test Logger", "logfile.log", loglevel=5)
+
+        for i in range(1, 101):
+            logger.info(f"Logging Information test #{i}")
+
+        assert logger.latest_log["msg"] == "Logging Information test #100"
+
+    def test_autoforget_logging_information(self):
+        logger = Logger("Autoforget Logging Information Test Logger", "logfile.log", loglevel=5, logsize=10, autoforget=True)
+
+        for i in range(1, 12):
+            logger.info(f"Autoforget Logging Information test #{i}")
+
+        assert logger.latest_log["msg"] == "Autoforget Logging Information test #11"
+        assert len(logger.getAllLogs()) == 10
+        assert logger.getLoggerInfo()["stats"]["log_size"] == 10
+        assert logger.getAllLogs()[0]["msg"] == "Autoforget Logging Information test #2"

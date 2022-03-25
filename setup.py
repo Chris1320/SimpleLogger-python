@@ -9,7 +9,7 @@ print(info.title)
 print()
 
 setup(
-    name="py-simple-logger",
+    name="simplelogger-python",
     version='.'.join(map(str, info.version)),  # Get the program version from the package.
     description="A simple logger I made for some projects a year ago.",
     long_description=README,

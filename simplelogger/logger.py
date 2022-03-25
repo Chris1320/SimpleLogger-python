@@ -161,6 +161,7 @@ class Logger():
             self.max_logfile_sz = float(kwargs.get("max_logfile_sz", 10.0))
 
         self.__session_logs = []  # Create the list that will contain the new logs.
+        self.latest_log = None  # The latest log.
 
         # * Check if logfile already exists.
         if os.path.exists(self.logfile):
@@ -346,6 +347,8 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
+            self.latest_log = log
+
         self.__sizeWatcher()
 
     def info(self, msg: str):
@@ -375,6 +378,8 @@ class Logger():
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
+
+            self.latest_log = log
 
         self.__sizeWatcher()
 
@@ -407,6 +412,8 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
+            self.latest_log = log
+
         self.__sizeWatcher()
 
     def error(self, msg: str):
@@ -438,6 +445,8 @@ class Logger():
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
 
+            self.latest_log = log
+
         self.__sizeWatcher()
 
     def critical(self, msg: str):
@@ -468,5 +477,7 @@ class Logger():
 
             if not self.memory:  # If self.memory if False, save to logfile.
                 self.__write_to_file(log)
+
+            self.latest_log = log
 
         self.__sizeWatcher()
