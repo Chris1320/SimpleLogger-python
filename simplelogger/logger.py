@@ -117,48 +117,31 @@ class Logger():
             if (self.__mode == "append" or self.autoforget) and kwargs.get("memory", False):
                 raise ValueError("`memory` cannot be set to True when `mode` is `append` or `autoforget` is True.")
 
-            else:
-                self.memory = kwargs.get("memory", False)
+            self.memory = kwargs.get("memory", False)
 
         else:
             raise ValueError("memory must be a boolean.")
-
-        # Format:
-        # {
-        #     <session 1>: [<logs>],
-        #     <session 2>: [<logs>]
-        # }
 
         # * Generate or get new session ID.
         self.__session_id = str(kwargs.get("session_id", self.__generateSessionID()))
 
         # * Get timestamp format.
-        if kwargs.get("timestamp", None) is None:
-            self.timestamp_format = None
-
-        else:
-            self.timestamp_format = str(kwargs.get("timestamp"))
+        self.timestamp_format = None if kwargs.get("timestamp", None) is None else str(kwargs.get("timestamp"))
 
         # * Set show_output.
-        if type(kwargs.get("show_output", False)) is bool:
-            self.show_output = kwargs.get("show_output", False)
-
-        else:
+        if type(kwargs.get("show_output", False)) is not bool:
             raise ValueError("show_output must be a boolean.")
 
-        if self.show_output:
-            if COLORAMA_SUPPORT:
-                cm_init()  # Initialize colorama if show_output is True.
+        self.show_output = kwargs.get("show_output", False)
+
+        if self.show_output and COLORAMA_SUPPORT:
+            cm_init()  # Initialize colorama if show_output is True.
 
         # * Set log_format.
         self.log_format = str(kwargs.get("log_format", ":{type}: [{session_id}] ({timestamp}) {caller} | {message}"))
 
         # * Set maximum logfile size. (in megabytes)
-        if kwargs.get("max_logfile_sz", 10.0) is None:
-            self.max_logfile_sz = None
-
-        else:
-            self.max_logfile_sz = float(kwargs.get("max_logfile_sz", 10.0))
+        self.max_logfile_sz = None if kwargs.get("max_logfile_sz", 10.0) is None else float(kwargs.get("max_logfile_sz", 10.0))
 
         self.__session_logs = []  # Create the list that will contain the new logs.
         self.latest_log = None  # The latest log.
@@ -304,6 +287,7 @@ class Logger():
             "timestamp": self.timestamp_format,
             "show_output": self.show_output,
             "log_format": self.log_format,
+
             "stats": {
                 "log_size": len(self.__session_logs),
             }
@@ -344,7 +328,7 @@ class Logger():
                 else:
                     print("[DEBUG] {1}(): {0}".format(msg, log["caller"]))
 
-            if not self.memory:  # If self.memory if False, save to logfile.
+            if not self.memory:  # If self.memory is False, save to logfile.
                 self.__write_to_file(log)
 
             self.latest_log = log
@@ -376,7 +360,7 @@ class Logger():
                 else:
                     print("[i] {0}".format(msg))
 
-            if not self.memory:  # If self.memory if False, save to logfile.
+            if not self.memory:  # If self.memory is False, save to logfile.
                 self.__write_to_file(log)
 
             self.latest_log = log
@@ -409,7 +393,7 @@ class Logger():
                 else:
                     print("[!] {0}".format(msg))
 
-            if not self.memory:  # If self.memory if False, save to logfile.
+            if not self.memory:  # If self.memory is False, save to logfile.
                 self.__write_to_file(log)
 
             self.latest_log = log
@@ -442,7 +426,7 @@ class Logger():
                 else:
                     print("[E] {0}".format(msg))
 
-            if not self.memory:  # If self.memory if False, save to logfile.
+            if not self.memory:  # If self.memory is False, save to logfile.
                 self.__write_to_file(log)
 
             self.latest_log = log
@@ -475,9 +459,10 @@ class Logger():
                 else:
                     print("[CRITICAL] {0}".format(msg))
 
-            if not self.memory:  # If self.memory if False, save to logfile.
+            if not self.memory:  # If self.memory is False, save to logfile.
                 self.__write_to_file(log)
 
             self.latest_log = log
 
         self.__sizeWatcher()
+
