@@ -3,37 +3,31 @@
 ## Description
 
 A simple logger I made for some projects a year ago.
-Thanks to [CodeFix1027](https://github.com/CodeFix1027) for helping me release `v0.0.1.0`!
 
 ## Usage
 
 ```python
-import logger
+from simplelogger.logger import Logger  # Import the logger.
 
-# Get a logging object.
-log_obj = logger.LoggingObject(
-    name='SampleLogger',
-    logfile='logfile.log'
-    )
-
-# Set the log level to show.
-log_obj.set_logging_level('NOTSET')
-
-# Show logs in the screen.
-log_obj.enable_logging()
+log_obj = Logger(  # Create a logger object.
+    "Test Logger",  # The name of the logger.
+    "logfile.log",  # Where to write the logs.
+    loglevel=5  # Set the log level. Capture all types of log.
+)
 
 log_obj.info("Sample Information message.")
 log_obj.warning("Sample warning message.")
 log_obj.error("Sample error message.")
 log_obj.debug("Sample debug message.")
 log_obj.critical("Sample critical message.")
+
 ```
 
 ## License
 
 MIT License
 
-Copyright (c) 2020 Chris1320
+Copyright (c) 2020-2022 Chris1320
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
