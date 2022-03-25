@@ -21,12 +21,13 @@ setup(
     classifiers=[  # https://pypi.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
+        "Topic :: System :: Logging"
     ],
     packages=["simplelogger"],
     include_package_data=True,
     install_requires=[],  # Required packages
     extras_require={  # Optional packages for optional features
-        "Output Colors": ["colorama"]
+        "Colors": ["colorama"]
     }
 )
