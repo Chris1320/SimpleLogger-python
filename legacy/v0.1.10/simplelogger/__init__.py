@@ -22,8 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from typing import Final
+from . import info
+from . import logger
 
-name: Final[str] = "SimpleLogger"
-version = (1, 0, 0)
-title = f"{name} v{'.'.join(map(str, version))}"
